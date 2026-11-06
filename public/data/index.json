@@ -1,0 +1,20 @@
+[
+  {
+    "scannedAt": "2026-01-15T08:00:00+00:00",
+    "label": "KVK4 pass 4",
+    "scope": "kingdom",
+    "kingdom": "3518",
+    "alliance": null,
+    "count": 14,
+    "file": "data/scans/2026-01-15T08-00-00-00-00-kvk4-pass-4.json"
+  },
+  {
+    "scannedAt": "2026-01-08T08:00:00+00:00",
+    "label": "KVK4 pass 1",
+    "scope": "kingdom",
+    "kingdom": "3518",
+    "alliance": null,
+    "count": 14,
+    "file": "data/scans/2026-01-08T08-00-00-00-00-kvk4-pass-1.json"
+  }
+]
