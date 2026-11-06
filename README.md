@@ -198,15 +198,41 @@ the new files up and redeploys.
 
 ## Tier 2 · Deploying to GitHub Pages
 
-1. Create the repository on GitHub and push this code to `main`.
-2. **Settings → Pages → Source → GitHub Actions**.
-3. Set the repository variable `VITE_BASE_PATH`:
-   - project site (`https://<user>.github.io/<repo>/`) → `/<repo>/`
-   - user site (`https://<user>.github.io/`) → leave empty
-4. Push, and the `deploy.yml` workflow publishes the site.
+The repository is already wired for GitHub Pages. One manual step remains.
 
-The workflow uses `actions/configure-pages`, so no `gh-pages` branch is
-needed.
+1. **Settings → Pages → Source → GitHub Actions**
+   - In the repository: `Settings` → `Pages` → `Build and deployment` →
+     `Source` → pick **GitHub Actions**.
+
+2. Push to `main`. The `deploy.yml` workflow builds and publishes the site.
+
+The workflow resolves the base path on its own:
+
+| Site type | Base path |
+|---|---|
+| Project site — `https://<user>.github.io/<repo>/` | `/<repo>/` |
+| User site — `https://<user>.github.io/` | root |
+
+It derives this from the repository name, so there is nothing to configure
+for a standard project site. If you later serve from a custom domain, set the
+`VITE_BASE_PATH` repository variable (Settings → Secrets and variables →
+Actions → Variables) to override it.
+
+The site will be live at:
+
+```
+https://Phuccp8386.github.io/Rok-tracker/
+```
+
+### Workflows
+
+| Workflow | When | What it does |
+|---|---|---|
+| `deploy.yml` | push to `main`, every 6 hours, manual | builds the site and publishes to Pages |
+| `validate-data.yml` | push touching `public/data/` or `tools/` | validates every scan against the game's kill point formula and fails the build on bad data |
+
+`validate-data.yml` runs before `deploy.yml` publishes, so a scan that does
+not reconcile with the game's arithmetic never reaches the live site.
 
 ---
 
