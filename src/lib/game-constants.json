@@ -1,0 +1,40 @@
+{
+  "_comment": "Verified game constants for Rise of Kingdoms. Single source of truth shared by the TypeScript dashboard and the Python tooling. Do not change these numbers without a source.",
+
+  "killPointsPerKill": {
+    "t1": 0.2,
+    "t2": 2,
+    "t3": 4,
+    "t4": 10,
+    "t5": 20
+  },
+
+  "_killPointsSource": "Kill points per defeated troop tier. T1=0.2, T2=2, T3=4, T4=10, T5=20. Ranged points are calculated separately from kill points and are NOT included in these totals.",
+
+  "troopPowerPerUnit": {
+    "t1": 1,
+    "t2": 2,
+    "t3": 3,
+    "t4": 4,
+    "t5": 10
+  },
+
+  "limits": {
+    "maxPower": 1000000000000,
+    "minPower": 0,
+    "maxKillPoints": 100000000000,
+    "maxDeaths": 100000000000,
+    "maxRss": 1000000000000,
+    "maxHelps": 10000000
+  },
+
+  "tolerance": {
+    "_comment": "Relative tolerances. OCR misreads produce small drift; anything above the error threshold is not credible.",
+    "killPointWarn": 0.05,
+    "killPointError": 0.2,
+    "totalKillsWarn": 0.02,
+    "totalKillsError": 0.1,
+    "rangedToKillPointWarn": 2,
+    "rangedToKillPointError": 10
+  }
+}

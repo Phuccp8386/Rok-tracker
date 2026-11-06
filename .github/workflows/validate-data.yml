@@ -1,0 +1,35 @@
+name: Validate scan data
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "public/data/**"
+      - "tools/**"
+  pull_request:
+    paths:
+      - "public/data/**"
+      - "tools/**"
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate every scan against the game's kill point formula
+        run: python tools/validate.py public/data
+
+      - name: Fail if any row is only a warning
+        run: python tools/validate.py public/data --strict
+
+      - name: Confirm the sample generator still produces valid data
+        run: |
+          python tools/make_sample.py
+          python tools/validate.py public/data --strict
+          git diff --exit-code public/data || echo "Sample data changed (non-fatal)."

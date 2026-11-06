@@ -258,6 +258,108 @@ tbody tr.flagged td {
   color: var(--text-dim);
 }
 
+/* ---------- data quality ---------- */
+
+.quality {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 20px;
+}
+
+.quality-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+}
+
+.quality-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot.good {
+  background: var(--good);
+}
+
+.dot.warn {
+  background: var(--warn);
+}
+
+.dot.bad {
+  background: var(--bad);
+}
+
+.quality-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.quality-stats .good {
+  color: var(--good);
+}
+
+.quality-stats .warn {
+  color: var(--warn);
+}
+
+.quality-stats .bad {
+  color: var(--bad);
+}
+
+.quality-stats .dim,
+.dim {
+  color: var(--text-dim);
+}
+
+.quality-toggle {
+  margin-top: 10px;
+  font-size: 12px;
+  padding: 4px 10px;
+}
+
+.quality-table {
+  margin-top: 10px;
+}
+
+.quality-table td.left {
+  white-space: normal;
+}
+
+.issue {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.badge.ok {
+  border-color: rgba(78, 201, 160, 0.5);
+  color: var(--good);
+}
+
+.badge.warn {
+  border-color: rgba(230, 180, 85, 0.5);
+  color: var(--warn);
+}
+
+.badge.error {
+  border-color: rgba(224, 96, 95, 0.5);
+  color: var(--bad);
+}
+
 /* ---------- alliance breakdown ---------- */
 
 .alliances {

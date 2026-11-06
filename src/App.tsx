@@ -14,6 +14,7 @@ import AllianceBreakdown from './components/AllianceBreakdown'
 import SummaryCards from './components/SummaryCards'
 import ScanPicker from './components/ScanPicker'
 import KingdomFilter from './components/KingdomFilter'
+import DataQuality from './components/DataQuality'
 
 type Tab = 'governors' | 'alliances'
 
@@ -253,6 +254,8 @@ export default function App() {
             totalPower={total(scored, 'power')}
             totalDeaths={total(scored, 'deadTroops')}
           />
+
+          <DataQuality governors={scored} />
 
           <div className="tabs">
             <button

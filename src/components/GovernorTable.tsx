@@ -1,4 +1,8 @@
-import { looksSuspicious, type ScoredGovernor, type SortKey } from '../lib/metrics'
+import {
+  type ScoredGovernor,
+  type SortKey,
+} from '../lib/metrics'
+import { validateGovernor } from '../lib/validation'
 import { formatCompact, formatFull } from './SummaryCards'
 
 interface Props {
@@ -72,10 +76,17 @@ export default function GovernorTable({
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
+          {rows.map((row) => {
+            const validation = validateGovernor(row)
+            return (
             <tr
               key={rowKey(row)}
-              className={looksSuspicious(row) ? 'flagged' : undefined}
+              className={validation.severity === 'ok' ? undefined : 'flagged'}
+              title={
+                validation.severity === 'ok'
+                  ? undefined
+                  : validation.issues.map((i) => i.message).join('\n')
+              }
             >
               {showKingdom && <td className="left">{row.kingdom ?? '-'}</td>}
               <td>{row.rank}</td>
@@ -84,6 +95,14 @@ export default function GovernorTable({
                 {row.inactive && (
                   <span className="badge inactive" style={{ marginLeft: 6 }}>
                     inactive
+                  </span>
+                )}
+                {validation.severity !== 'ok' && (
+                  <span
+                    className={`badge ${validation.severity}`}
+                    style={{ marginLeft: 6 }}
+                  >
+                    {validation.severity}
                   </span>
                 )}
               </td>
@@ -105,7 +124,8 @@ export default function GovernorTable({
               <td>{formatFull(row.helps)}</td>
               <td>{formatCompact(row.dkp)}</td>
             </tr>
-          ))}
+            )
+          })}
         </tbody>
       </table>
     </div>

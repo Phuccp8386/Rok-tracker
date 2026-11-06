@@ -1,12 +1,20 @@
 import type { Governor } from '../types'
+import { KILL_POINTS_PER_KILL } from './game-constants'
 
 /**
  * DKP (Dominion Kill Points) style score.
  *
  * The exact weights are configurable because every alliance runs its own
- * scoring policy. The defaults below follow the common "contribution to the
- * kingdom" formula: kill points dominate, then gathered resources, then
- * assistance, with deaths penalised.
+ * scoring policy. The defaults below follow the community's standard KvK
+ * contribution formula:
+ *
+ *   - T4 kill = 1 point, T5 kill = 2 points
+ *   - Dead troop = 10 points (you did fight, even if you lost)
+ *   - RSS gathered = 1 point per 10,000
+ *
+ * Kill points themselves are weighted lightly because they are already the
+ * game's own measure of combat contribution and are enormous numbers, which
+ * would otherwise swamp every other term.
  */
 export interface DkpWeights {
   killPoints: number
@@ -19,13 +27,17 @@ export interface DkpWeights {
 }
 
 export const DEFAULT_DKP_WEIGHTS: DkpWeights = {
-  killPoints: 1,
-  highTierKills: 50,
-  rssGathered: 0.5,
-  rssAssistance: 0.25,
-  helps: 5,
-  deadTroops: -0.1,
+  killPoints: 0.001,
+  highTierKills: 1,
+  rssGathered: 1 / 10_000,
+  rssAssistance: 0,
+  helps: 0,
+  deadTroops: 10,
 }
+
+/** Kill point value of a T4 and T5 kill, used by the DKP formula. */
+export const DKP_T4_POINTS = 1
+export const DKP_T5_POINTS = 2
 
 export interface ScoredGovernor extends Governor {
   dkp: number
@@ -65,13 +77,18 @@ export function killPointRatio(g: Governor): number | null {
   return g.killPoints / g.totalKills
 }
 
-/** Flags rows whose stats look like an OCR misread. */
-export function looksSuspicious(g: Governor): boolean {
-  const ratio = killPointRatio(g)
-  if (ratio !== null && (ratio < 100 || ratio > 6000)) return true
-  if (g.power > 0 && g.power < 1000) return true
-  if (g.killPoints > 0 && g.totalKills === 0) return true
-  return false
+/**
+ * Expected kill points for a row, derived from its tier breakdown.
+ * Mirrors the game's own arithmetic.
+ */
+export function expectedKillPointsFor(g: Governor): number {
+  return (
+    g.kills.t1 * KILL_POINTS_PER_KILL.t1 +
+    g.kills.t2 * KILL_POINTS_PER_KILL.t2 +
+    g.kills.t3 * KILL_POINTS_PER_KILL.t3 +
+    g.kills.t4 * KILL_POINTS_PER_KILL.t4 +
+    g.kills.t5 * KILL_POINTS_PER_KILL.t5
+  )
 }
 
 export type SortKey =
@@ -89,8 +106,7 @@ export type SortKey =
   | 'helps'
   | 'dkp'
 
-export const SORTABLE_KEYS: SortKey[] = [
-  'rank',
+export const SORTABLE_KEYS: SortKey[] = [  'rank',
   'name',
   'alliance',
   'power',

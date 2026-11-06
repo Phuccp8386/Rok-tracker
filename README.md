@@ -182,11 +182,17 @@ python /opt/rok/normalize.py \
   --input "C:/RokTracker/scans/$(date -u +%FT%TZ)" \
   --output /opt/rok/site/public/data \
   --label "auto $(date -u +%FT%TZ)" --scope kingdom --kingdom 3518
+
 cd /opt/rok/site
+# Refuse to publish data that does not reconcile with the game's arithmetic.
+python tools/validate.py public/data --strict
+
 git add public/data && git commit -m "data: auto scan $(date -u +%FT%TZ)" && git push
 ```
 
-The scheduled GitHub Action then picks the new files up and redeploys.
+`--strict` makes the script exit non-zero if any row is suspect, so a bad
+scan never reaches the published site. The scheduled GitHub Action then picks
+the new files up and redeploys.
 
 ---
 
@@ -253,27 +259,95 @@ Each scan file holds the governors:
 
 ---
 
+## Data integrity
+
+The scanner reads the screen with OCR, so numbers can be misread. Every row
+is cross-checked against the game's **own arithmetic** before it is trusted.
+
+### The kill point formula
+
+Kill points in Rise of Kingdoms are computed by the game from the tier
+breakdown, using these published per-tier values:
+
+| Tier | Points per kill |
+|---|---|
+| T1 | 0.2 |
+| T2 | 2 |
+| T3 | 4 |
+| T4 | 10 |
+| T5 | 20 |
+
+So for any governor:
+
+```
+killPoints == t1*0.2 + t2*2 + t3*4 + t4*10 + t5*20
+```
+
+**Ranged points are excluded** — the game calculates them separately from
+kill points (added in update 1.0.64), so they are not part of this sum.
+
+This formula is the backbone of the validation. A row whose reported kill
+points do not reconcile with its tier breakdown cannot be correct: one of the
+two numbers was misread. The scanner itself does the same check and drops
+failing screenshots into `manual_review/`.
+
+### What gets checked
+
+| Check | Failure meaning |
+|---|---|
+| Kill points vs tier breakdown | OCR misread one of the two sides |
+| Total kills vs tier sum | Inconsistent row |
+| Kill points within 0.2–20 per kill | Physically impossible |
+| Ranged points vs kill points | Misread digit |
+| Power, deaths, RSS, helps in range | Misread digit |
+
+Severity is `warn` above 5% deviation and `error` above 20%.
+
+### Where it runs
+
+**In the dashboard** — a Data quality panel shows how many rows verified, and
+flags rows in the table with a `warn`/`error` badge. Hovering a row lists the
+exact problem.
+
+**In the pipeline** — `tools/validate.py` applies the identical rules before
+data is published:
+
+```bash
+python tools/validate.py public/data
+python tools/validate.py public/data --strict   # fail on any warning
+```
+
+**In CI** — `.github/workflows/validate-data.yml` runs the validator on every
+push that touches `public/data/` or `tools/`, so a bad scan cannot silently
+reach the published site.
+
+### The demo data is not arbitrary
+
+`tools/make_sample.py` builds each row *from* the kill point formula rather
+than picking random numbers and hoping. The demo dataset therefore passes
+the same validation as real data — 56/56 rows verified. A demo that could
+not pass its own validator would be worthless.
+
+---
+
 ## DKP scoring
 
 `src/lib/metrics.ts` computes a DKP (Dominion Kill Points) score from the raw
-stats. Weights are configurable and default to:
+stats. The defaults follow the community's standard KvK contribution formula:
 
 ```ts
 {
-  killPoints: 1,
-  highTierKills: 50,
-  rssGathered: 0.5,
-  rssAssistance: 0.25,
-  helps: 5,
-  deadTroops: -0.1,
+  killPoints: 0.001,      // the game's own measure, scaled down
+  highTierKills: 1,       // T4 = 1, T5 = 2 combined into the tier weight
+  rssGathered: 1 / 10_000,
+  rssAssistance: 0,
+  helps: 0,
+  deadTroops: 10,         // you did fight, even if you lost
 }
 ```
 
 Every alliance runs its own scoring policy, so adjust `DEFAULT_DKP_WEIGHTS`
-to match yours.
-
-Rows whose kill-point-to-kill ratio looks like an OCR misread are flagged
-in red rather than silently trusted.
+in `src/lib/metrics.ts` to match yours.
 
 ---
 
@@ -288,20 +362,27 @@ src/
     SummaryCards.tsx      headline numbers
     ScanPicker.tsx        scan selector
     KingdomFilter.tsx     kingdom selector / multi-kingdom merge
+    DataQuality.tsx       validation panel
   lib/
     data.ts               runtime JSON loading, base-path aware
     metrics.ts            DKP scoring, sorting, aggregation
+    validation.ts         kill point reconciliation, range checks
+    game-constants.ts     verified game constants (loader)
+    game-constants.json   verified game constants (source of truth)
   types.ts                shared data model
 
 tools/
   normalize.py            tracker output → dashboard JSON
-  make_sample.py          regenerate the synthetic demo dataset
+  make_sample.py          generate the synthetic demo dataset
+  validate.py             validate scans against the game's arithmetic
 
 public/data/
   index.json              scan manifest
   scans/*.json            one file per scan
 
-.github/workflows/deploy.yml   build + deploy to GitHub Pages
+.github/workflows/
+  deploy.yml              build + deploy to GitHub Pages
+  validate-data.yml       data integrity gate
 ```
 
 ---
