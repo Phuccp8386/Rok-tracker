@@ -6,6 +6,8 @@ interface Props {
   sortKey: SortKey
   sortDir: 'asc' | 'desc'
   onSort: (key: SortKey) => void
+  /** Show the kingdom column. Only useful when several kingdoms are merged. */
+  showKingdom?: boolean
 }
 
 interface Column {
@@ -38,12 +40,22 @@ export default function GovernorTable({
   sortKey,
   sortDir,
   onSort,
+  showKingdom = false,
 }: Props) {
+  // Governor ids are unique per kingdom, not globally, so the row key has to
+  // include the kingdom when several kingdoms are merged.
+  const rowKey = (row: ScoredGovernor) => `${row.kingdom ?? '-'}:${row.id}`
+
   return (
     <div className="table-wrap">
       <table>
         <thead>
           <tr>
+            {showKingdom && (
+              <th className="left" title="Kingdom the scan came from">
+                KD
+              </th>
+            )}
             {COLUMNS.map((col) => (
               <th
                 key={col.key}
@@ -62,9 +74,10 @@ export default function GovernorTable({
         <tbody>
           {rows.map((row) => (
             <tr
-              key={row.id}
+              key={rowKey(row)}
               className={looksSuspicious(row) ? 'flagged' : undefined}
             >
+              {showKingdom && <td className="left">{row.kingdom ?? '-'}</td>}
               <td>{row.rank}</td>
               <td className="left">
                 {row.name}

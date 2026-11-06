@@ -87,6 +87,44 @@ The GitHub Action rebuilds and redeploys automatically on every push to
 
 ---
 
+## Choosing which kingdom to scan
+
+This depends entirely on the scanner, not on the dashboard.
+
+| Tier 1 method | Can you pick any kingdom? |
+|---|---|
+| **OCR scanners** (Cyrexxis, nikolakis1919, Nexor256) | **No.** The kingdom is decided by whichever character is logged in. To scan another kingdom you need an account in it — usually a farm/alt account. There is no `--kingdom` switch. |
+| **PC client + Lua injection / WHMP protocol** | **Yes.** `FetchPlayerInfo(nil, id, 2)` fetches any governor by id, so any kingdom can be harvested. This is how the [rok-data-pipeline](https://www.ndang.dev/work/rok-pipeline) project sweeps 4,000 kingdoms. |
+
+The `--kingdom` flag on `normalize.py` is **metadata only** — it labels the
+scan so the dashboard can group and filter by kingdom. It does not steer the
+scanner.
+
+### Multi-kingdom dashboards
+
+Scans from different kingdoms coexist in `public/data`. The dashboard has a
+**Kingdom** selector:
+
+- **All kingdoms** — merges the newest scan of every kingdom into one view
+  and adds a `KD` column so rows stay attributable.
+- **A specific kingdom** — shows only that kingdom's newest scan.
+
+Only the newest scan per kingdom is merged; older scans of the same kingdom
+stay reachable through the **Scan** picker.
+
+To label a scan for a kingdom:
+
+```bash
+python tools/normalize.py \
+  --input "C:/RokTracker/scans/kd2455" \
+  --output public/data \
+  --label "KVK3 pass 5" \
+  --scope kingdom \
+  --kingdom 2455
+```
+
+---
+
 ## Tier 1 · Getting the data
 
 Pick the scanner that matches your setup. All of these produce a file the
@@ -249,6 +287,7 @@ src/
     AllianceBreakdown.tsx per-alliance aggregate cards
     SummaryCards.tsx      headline numbers
     ScanPicker.tsx        scan selector
+    KingdomFilter.tsx     kingdom selector / multi-kingdom merge
   lib/
     data.ts               runtime JSON loading, base-path aware
     metrics.ts            DKP scoring, sorting, aggregation

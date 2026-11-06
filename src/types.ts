@@ -43,6 +43,8 @@ export interface Governor {
   rank: number
   /** True when the account shows signs of being inactive. */
   inactive: boolean
+  /** Kingdom the row came from. Set when scans from several kingdoms merge. */
+  kingdom?: string
 }
 
 export interface Scan {
