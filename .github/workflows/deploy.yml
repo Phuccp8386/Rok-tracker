@@ -30,9 +30,34 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Resolve base path
+        id: base
+        env:
+          OVERRIDE: ${{ vars.VITE_BASE_PATH }}
+          REPO_NAME: ${{ github.event.repository.name }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          # A project site lives at https://<owner>.github.io/<repo>/ and needs
+          # a base path of "/<repo>/". A user site lives at the domain root and
+          # needs an empty base path - that is the case where the repository
+          # name matches the owner name.
+          #
+          # Deriving this from the checkout means the workflow works with no
+          # manual configuration. Set the VITE_BASE_PATH repository variable
+          # to override it, for example when serving from a custom domain.
+          if [ -n "$OVERRIDE" ]; then
+            base="$OVERRIDE"
+          elif [ "$REPO_NAME" = "$OWNER" ]; then
+            base=""
+          else
+            base="/$REPO_NAME/"
+          fi
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+          echo "Base path resolved to: '$base'"
+
       - name: Build
         env:
-          VITE_BASE_PATH: ${{ vars.VITE_BASE_PATH }}
+          VITE_BASE_PATH: ${{ steps.base.outputs.base }}
         run: npm run build
 
       - name: Setup Pages
